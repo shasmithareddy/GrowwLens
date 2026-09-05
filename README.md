@@ -94,10 +94,7 @@ without depending on market hours.
 
 ## Architecture
 
-![GrowwLens architecture diagram](docs/assets/growwlens-architecture.png)
-
-> Add the architecture image at
-> `docs/assets/growwlens-architecture.png` to display it here.
+![GrowwLens architecture diagram](docs/arch.png)
 
 ### Runtime architecture
 
