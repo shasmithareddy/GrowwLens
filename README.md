@@ -15,9 +15,7 @@ Instead of only showing the latest price, GrowwLens helps answer:
 The product combines live data from the **Groww API** and the **Indian Stock
 Market API** with an event-driven analysis engine, persistent watchlists,
 technical signals, anomaly detection, alerts, notifications, news context,
-charts, heatmaps, and simulated trading.Enriched stock table with price, daily movement, volume, volume ratio,
-  anomaly state, EMA, buy/sell pressure, sparklines, 52-week range, holdings,
-  and change since addition.
+charts, heatmaps, and simulated trading.Enriched stock table with **price, daily movement, volume, volume ratio, anomaly state, EMA, buy/sell pressure, sparklines, 52-week range, holdings, and change since addition.**
 
 > GrowwLens is a market-observation and paper-trading product prototype. It
 > does not place real broker orders or provide investment advice.
