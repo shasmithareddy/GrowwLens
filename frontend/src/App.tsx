@@ -27,6 +27,7 @@ export function App() {
 
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('wl_harish');
+  const [watchlistLoadError, setWatchlistLoadError] = useState<string | null>(null);
   const [whatChangedReport, setWhatChangedReport] = useState<WhatChangedReport | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -70,15 +71,43 @@ export function App() {
   const fetchWatchlists = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/watchlists`);
-      const data = await res.json();
-      setWatchlists(data);
-      if (data.length > 0 && !activeWatchlistId) {
-        setActiveWatchlistId(data[0].id);
+      if (!res.ok) {
+        throw new Error(`Watchlist request failed (${res.status})`);
       }
-    } catch (e) {
-      console.error('Error fetching watchlists:', e);
+
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Watchlist response was not an array');
+      }
+
+      const validWatchlists = data.filter(
+        (watchlist): watchlist is Watchlist =>
+          typeof watchlist === 'object' &&
+          watchlist !== null &&
+          typeof (watchlist as Watchlist).id === 'string' &&
+          Array.isArray((watchlist as Watchlist).items)
+      );
+      if (validWatchlists.length !== data.length) {
+        throw new Error('Watchlist response contained invalid entries');
+      }
+
+      const defaultWatchlist =
+        validWatchlists.find((watchlist) => watchlist.is_default) ?? validWatchlists[0];
+      setWatchlists(validWatchlists);
+      setActiveWatchlistId((currentId) =>
+        validWatchlists.some((watchlist) => watchlist.id === currentId)
+          ? currentId
+          : defaultWatchlist?.id ?? ''
+      );
+      setWatchlistLoadError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load watchlists';
+      setWatchlistLoadError(message);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching watchlists:', error);
+      }
     }
-  }, [activeWatchlistId]);
+  }, []);
 
   const fetchWhatChanged = useCallback(async () => {
     try {
@@ -442,6 +471,11 @@ export function App() {
                 if (stock) setSelectedStockForTerminal(stock);
               }}
             />
+            {watchlistLoadError && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Watchlists could not be loaded. Check the backend connection and refresh.
+              </div>
+            )}
             <div className="grid min-w-0 grid-cols-1 gap-6">
               <WatchlistTable
                 watchlists={watchlists}
