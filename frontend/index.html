@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300D09C'/><path d='M28 52 L42 66 L72 34' fill='none' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GrowwLens | Intelligent Market Watchlist</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN with Groww Brand Palette -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              groww: {
+                primary: '#00D09C',
+                hover: '#00B386',
+                light: '#E6FAF5',
+                dark: '#008765',
+                bg: '#F9FAFB',
+                card: '#FFFFFF',
+                border: '#EAECF0',
+                textDark: '#101828',
+                textMuted: '#667085',
+                red: '#F04438',
+                redLight: '#FEE4E2',
+                amber: '#F79009',
+                amberLight: '#FEF0C7',
+                blue: '#0BA5EC',
+                blueLight: '#E0F2FE'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: #F8F9FA;
+        color: #101828;
+      }
+      /* Custom tick flash animations */
+      @keyframes greenFlash {
+        0% { background-color: rgba(0, 208, 156, 0.25); }
+        100% { background-color: transparent; }
+      }
+      @keyframes redFlash {
+        0% { background-color: rgba(240, 68, 56, 0.25); }
+        100% { background-color: transparent; }
+      }
+      .tick-up {
+        animation: greenFlash 1s ease-out;
+      }
+      .tick-down {
+        animation: redFlash 1s ease-out;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F1F3F5;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #D0D5DD;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #98A2B3;
+      }
+    </style>
+  </head>
+  <body class="antialiased min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
