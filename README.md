@@ -1,364 +1,212 @@
 # GrowwLens
 
-## A watchlist that thinks like a trader
+## Intelligent market intelligence for traders
 
-GrowwLens is a full-stack market-intelligence terminal built for traders who
-need more than a list of prices. It answers four practical questions:
+GrowwLens is a trader-focused market intelligence terminal that turns a
+watchlist into an explanation layer for the market.
 
-1. **What changed?**
-2. **Why did it change?**
-3. **How important is the change?**
-4. **What deserves attention next?**
+Instead of only showing the latest price, GrowwLens helps answer:
 
-The application combines live market data from the **Groww API** and the
-**Indian Stock Market API** with simulated events, persistent watchlists,
-technical analysis, anomaly detection, alerts, notifications, news timelines,
-related stocks, charts, heatmaps, and simulated orders in one trader-focused
-workflow.
+- **What changed?**
+- **Why did it change?**
+- **How significant is it?**
+- **Which stocks deserve attention now?**
 
-Groww provides quote, LTP, OHLC, profile, holdings, and margin data, while the
-Indian Stock Market API enriches the terminal with market activity, news,
-trending data, and sector-peer context. When external credentials or live
-quotes are unavailable, GrowwLens continues with seeded snapshots and its
-built-in simulator for reliable demonstrations.
+The product combines live data from the **Groww API** and the **Indian Stock
+Market API** with an event-driven analysis engine, persistent watchlists,
+technical signals, anomaly detection, alerts, notifications, news context,
+charts, heatmaps, and simulated trading.
 
-> **GrowwLens is not a broker or an investment-advice system.** It is an
-> event-driven market-observation and paper-trading prototype.
+> GrowwLens is a market-observation and paper-trading product prototype. It
+> does not place real broker orders or provide investment advice.
 
-## What has been built
+## Product capabilities
 
-### Trader experience
+### Trader workspace
 
-- Multiple persistent watchlists with create, delete, add, remove, and pin actions.
-- Default watchlist loading with enriched stock rows and live row updates.
-- A **What changed?** view based on each item’s persisted last-seen baseline.
-- Price, daily percentage, volume, volume ratio, anomaly status, EMA20, pressure,
-  sparklines, 52-week range, holdings, and change-since-added fields.
-- Live market-status and data-quality indicators.
-- Stock terminal with interactive lightweight charts.
-- Volume/order-book visualization and market heatmaps.
+- Persistent multi-watchlist workspace with create, delete, add, remove, and
+  pin actions.
+- Enriched stock table with price, daily movement, volume, volume ratio,
+  anomaly state, EMA, buy/sell pressure, sparklines, 52-week range, holdings,
+  and change since addition.
+- **What changed?** view comparing current state with the last-seen baseline.
+- Market-status and data-quality visibility.
+- Interactive stock terminal with chart history and technical context.
+- Volume/order-book view and market heatmaps.
 - News-to-market reaction timelines.
-- Related-stock and sector-peer discovery.
-- Simulated BUY/SELL orders with persisted order and holding records.
-- Cross-device mutation fanout for connected browser sessions.
+- Related stocks and sector-peer discovery.
+- Simulated buy/sell orders with persisted order and portfolio records.
 
-### Market intelligence
+### Live intelligence
 
-Every market update is represented as a canonical `MarketEvent`. The change
-engine then calculates:
+Each update is normalized into a canonical `MarketEvent` and processed through
+the same analysis pipeline whether it comes from a live provider or the
+simulator.
 
-- EMA20 and EMA50 values.
-- Bullish and bearish EMA crossovers.
+The analysis layer produces:
+
+- EMA20 and EMA50 trend values.
+- Bullish and bearish EMA crossover signals.
 - Volume ratio against a proportional baseline.
 - Volume-anomaly detection.
 - Signed-volume buy and sell pressure.
 - Rolling volatility.
-- A deterministic 0–100 attention score.
+- Deterministic 0–100 attention scores.
 - Human-readable meaningful-change explanations.
-
-The simulator is intentionally useful for demonstrations and off-hours testing:
-it changes prices, volumes, indicators, indices, alerts, and notifications
-without requiring an external market feed.
 
 ### Alerts and notifications
 
-- Stateful price alerts with `ARMED`, `TRIGGERED`, `COOLDOWN`, and `DISABLED`
-  states.
-- PostgreSQL row locks protect the alert transition.
-- A unique `(alert_id, market_event_id)` constraint prevents duplicate logical
-  alerts.
-- Immediate in-app notifications over WebSocket.
-- Toast notifications in the frontend.
-- Email audit records and optional Resend delivery.
-- A concurrency demonstration showing duplicate-alert suppression.
+- Stateful alert lifecycle: `ARMED`, `TRIGGERED`, `COOLDOWN`, and `DISABLED`.
+- PostgreSQL row locks for safe concurrent state transitions.
+- Idempotency protection through a unique `(alert_id, market_event_id)` key.
+- Immediate WebSocket alert delivery and in-app notifications.
+- Toast feedback in the terminal.
+- Email audit records with optional Resend delivery.
+- Race-condition demonstration for duplicate-alert prevention.
+
+## Data integrations
+
+### Groww API
+
+Groww integration supports:
+
+- Quotes and last traded prices.
+- OHLC and daily market fields.
+- User profile information.
+- Holdings and margin data.
+
+### Indian Stock Market API
+
+The Indian Stock Market API enriches the product with:
+
+- Market activity and most-active data.
+- News and market context.
+- Trending information.
+- Sector and peer discovery.
+
+### Reliable demonstration mode
+
+When external provider credentials or live quotes are unavailable, GrowwLens
+continues with seeded market snapshots and a built-in simulator. Simulation
+mode produces realistic price, volume, indicator, index, alert, and
+notification events so the complete product workflow can be demonstrated
+without depending on market hours.
 
 ## Architecture
 
+![GrowwLens architecture diagram](docs/assets/growwlens-architecture.png)
+
+> Add the architecture image at
+> `docs/assets/growwlens-architecture.png` to display it here.
+
+### Runtime architecture
+
 ```text
-React 19 + TypeScript + Vite
-             │
-             │ REST + WebSocket
-             ▼
-FastAPI application
-             │
-   ┌─────────┼────────────────────┐
-   ▼         ▼                    ▼
-PostgreSQL Redis Streams     Provider adapter
-source of   groww:market-   simulator / Groww
-truth       events          / IndianStockAPI
-   │         │                    │
-   └─────────┴──────────────┬─────┘
-                            ▼
-                 Change + alert engines
-                            │
-                            ▼
-                    WebSocket gateway
-                            │
-                            ▼
-                 Browser tables and alerts
+┌──────────────────────────────────────────────────────────────┐
+│ React + TypeScript trading terminal                         │
+│ Watchlists · charts · alerts · heatmaps · news · orders      │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ REST + WebSocket
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│ FastAPI application                                          │
+│ REST API · WebSocket gateway · lifecycle orchestration       │
+└───────────────┬──────────────────┬───────────────────────────┘
+                │                  │
+                ▼                  ▼
+┌────────────────────────┐  ┌─────────────────────────────────┐
+│ PostgreSQL              │  │ Redis Streams                  │
+│ Persistent source       │  │ groww:market-events             │
+│ of truth + row locks    │  │ Durable event transport         │
+└────────────────────────┘  └───────────────┬─────────────────┘
+                                            ▼
+                              ┌───────────────────────────────┐
+                              │ Market event consumer          │
+                              │ Change + alert processing      │
+                              └───────────────┬───────────────┘
+                                              ▼
+                              ┌───────────────────────────────┐
+                              │ WebSocket broadcast layer       │
+                              │ Ticks · changes · notifications │
+                              └───────────────────────────────┘
 ```
 
 ### Event lifecycle
 
-1. The provider adapter creates a `MarketEvent`.
-2. The event is published to the `groww:market-events` Redis Stream.
-3. The stream consumer processes the event.
-4. The change engine calculates indicators, attention, and meaningful changes.
-5. The alert engine evaluates active alerts inside a transactional lock.
-6. The database records snapshots, alert events, and notifications.
-7. The WebSocket gateway broadcasts ticks, changes, and alert events.
-8. The frontend updates existing rows by `symbol` without depending on WebSocket
-   data for initial REST table population.
+1. Groww, Indian Stock Market API, or the simulator produces market data.
+2. The provider adapter creates a canonical `MarketEvent`.
+3. The event is published to the `groww:market-events` Redis Stream.
+4. The consumer invokes the change detector and alert engine.
+5. Indicators, attention scores, anomalies, and meaningful changes are created.
+6. Alert state, market records, and notifications are persisted.
+7. WebSocket events are broadcast to connected browser sessions.
+8. The frontend updates matching symbols immediately.
 
-### Consistency model
+REST remains responsible for the initial watchlist table. WebSocket events
+provide live updates after the initial state has loaded.
 
-PostgreSQL is the preferred source of truth. Alert processing uses native row
-locking:
+## Consistency and reliability
+
+PostgreSQL is the preferred persistence layer. Alert transitions use native
+database row locks:
 
 ```sql
-SELECT status FROM alerts
+SELECT status
+FROM alerts
 WHERE id = $1
 FOR UPDATE;
 ```
 
-The database also enforces an idempotency constraint:
+The database also enforces:
 
 ```text
 UNIQUE(alert_id, market_event_id)
 ```
 
-SQLite/WAL and an asyncio queue remain explicit local fallback modes for tests
-and offline development; they are not silently presented as distributed
-production infrastructure.
+This prevents concurrent workers or duplicate event delivery from creating
+duplicate logical alerts.
+
+SQLite/WAL and an in-process queue are explicit fallback modes for offline
+development and tests. They are not represented as distributed production
+infrastructure.
 
 ## Technology stack
 
-### Frontend
-
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- Lightweight Charts
-- Lucide React
-- Oxlint
-
-### Backend
-
-- Python 3.12+
-- FastAPI
-- Pydantic
-- Uvicorn
-- Psycopg 3
-- Redis Python client
-- HTTPX
-- Groww Python SDK
-
-### Infrastructure
-
-- PostgreSQL 16
-- Redis 7 and Redis Streams
-- Docker Compose
-- SQLite/WAL fallback
-- Render-compatible FastAPI deployment
-- Vercel-compatible Vite deployment
-
-## Repository layout
-
-```text
-Groww/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── router.py              # REST endpoints
-│   │   │   └── websocket.py           # WebSocket gateway
-│   │   ├── core/
-│   │   │   ├── config.py              # Environment configuration
-│   │   │   ├── events.py              # Canonical event models
-│   │   │   └── market_stream.py       # Redis Streams / queue fallback
-│   │   ├── db/
-│   │   │   ├── database.py             # PostgreSQL/SQLite adapter
-│   │   │   └── schema.sql              # Relational schema
-│   │   ├── services/
-│   │   │   ├── provider_adapter.py     # Live/simulated market source
-│   │   │   ├── change_detector.py      # Indicators and attention
-│   │   │   ├── alert_engine.py         # Locked alert state machine
-│   │   │   ├── notification_service.py # Device/email delivery
-│   │   │   ├── groww_service.py        # Groww integration
-│   │   │   ├── indian_stock_service.py # Optional market/news provider
-│   │   │   ├── news_timeline.py        # News reaction timelines
-│   │   │   └── similarity_engine.py     # Related stocks and peers
-│   │   └── main.py
-│   └── tests/
-├── frontend/
-│   └── src/
-├── docs/
-├── docker-compose.yml
-├── requirements.txt
-└── .env.example
-```
-
-## Run locally
-
-### Prerequisites
-
-- Python 3.12+
-- Node.js 18+
-- Docker Desktop and Docker Compose
-
-### 1. Start PostgreSQL and Redis
-
-```bash
-docker compose up -d
-docker compose ps
-```
-
-| Service | Image | Host port |
-| --- | --- | --- |
-| PostgreSQL | `postgres:16-alpine` | `55432` |
-| Redis | `redis:7-alpine` | `6379` |
-
-Port `55432` is intentional so a native PostgreSQL installation on `5432`
-does not conflict with the project.
-
-### 2. Configure the backend
-
-```bash
-cp .env.example .env
-```
-
-Local defaults:
-
-```env
-DATABASE_URL=postgresql://groww:groww@localhost:55432/groww_lens
-REDIS_URL=redis://localhost:6379/0
-REDIS_ENABLED=true
-CORS_ORIGINS=http://localhost:5173
-```
-
-The backend creates the schema and seeds demo watchlists on startup.
-
-### 3. Install and start FastAPI
-
-```bash
-python3 -m venv venv
-./venv/bin/python -m pip install -r requirements.txt
-./venv/bin/uvicorn app.main:app \
-  --host 0.0.0.0 \
-  --port 8000 \
-  --app-dir backend
-```
-
-Backend: <http://localhost:8000>
-
-### 4. Install and start the frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend: <http://localhost:5173>
-
-## Deployment
-
-### Render backend
-
-Create a Render Web Service with:
-
-```text
-Build command: pip install -r requirements.txt
-Start command: uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend
-```
-
-Set:
-
-```env
-DATABASE_URL=<Render PostgreSQL internal URL>
-REDIS_URL=<Render Redis URL>
-REDIS_ENABLED=true
-CORS_ORIGINS=https://<your-vercel-domain>
-```
-
-Never commit database passwords, Redis URLs, API keys, or `.env` files.
-
-### Vercel frontend
-
-Set the Vercel project root directory to `frontend`, then configure:
-
-```env
-VITE_API_URL=https://<your-render-service>.onrender.com
-VITE_WS_URL=wss://<your-render-service>.onrender.com
-```
-
-Build settings:
-
-```text
-Install command: npm install
-Build command: npm run build
-Output directory: dist
-```
-
-`VITE_*` values are embedded at build time, so changing them requires a new
-Vercel deployment. The Render CORS origin must exactly match the browser origin,
-including hyphens and without a trailing slash.
-
-## Configuration and integrations
-
-The simulator and seeded data work without external credentials. Optional
-integrations are enabled through environment variables:
-
-| Variable | Used for |
+| Layer | Technology |
 | --- | --- |
-| `GROWW_API_KEY` | Groww SDK authentication |
-| `GROWW_API_SECRET` | Groww SDK authentication |
-| `INDIAN_STOCK_API_KEY` | News, trending data, and sector peers |
-| `RESEND_API_KEY` | Real email delivery |
-| `RESEND_FROM_EMAIL` | Resend sender address |
-| `FINNHUB_API_KEY` | Reserved provider integration |
-| `TWELVEDATA_API_KEY` | Reserved provider integration |
+| Frontend | React 19, TypeScript, Vite |
+| UI | Tailwind CSS, Lucide React |
+| Charts | Lightweight Charts |
+| Backend | Python, FastAPI, Pydantic, Uvicorn |
+| Persistence | PostgreSQL 16, Psycopg 3 |
+| Event transport | Redis 7, Redis Streams |
+| Integrations | Groww Python SDK, Indian Stock Market API, HTTPX |
+| Notifications | WebSocket delivery, optional Resend |
+| Fallbacks | SQLite/WAL, asyncio event queue |
 
-Groww-backed endpoints include quote, LTP, OHLC, profile, holdings, and margin
-access. Provider failures do not require fake credentials: the application can
-continue in simulator or seeded-snapshot mode.
+## API surface
 
-## REST API map
+All REST endpoints use the `/api` prefix.
 
-All endpoints use the `/api` prefix.
-
-| Area | Endpoints |
+| Capability | Endpoints |
 | --- | --- |
-| Health/market | `/system/health`, `/indices`, `/heatmap`, `/heatmap/data` |
+| Health and market | `/system/health`, `/indices`, `/heatmap`, `/heatmap/data` |
 | Simulation | `/settings/simulation-mode`, `/simulator/anomaly` |
-| Watchlists | `/watchlists`, `/watchlists/{id}/items`, `/watchlists/{id}/items/{symbol}/pin` |
+| Watchlists | `/watchlists`, `/watchlists/{id}/items`, pin/remove actions |
 | Change detection | `/what-changed`, `/mark-seen` |
-| Stock intelligence | `/stocks/{symbol}`, `/history`, `/volume-orderbook`, `/timeline`, `/related`, `/peers` |
+| Stock intelligence | `/stocks/{symbol}`, history, order book, timeline, related, peers |
 | News | `/news/feed` |
-| Groww | `/groww/quote`, `/ltp`, `/ohlc`, `/profile`, `/holdings`, `/margin` |
+| Groww | quote, LTP, OHLC, profile, holdings, margin |
 | Alerts | `/alerts`, `/alerts/simulate-race` |
-| Notifications | `/notifications`, `/notifications/mark-read`, `/emails`, `/devices` |
+| Notifications | `/notifications`, mark-read, emails, devices |
 | Paper trading | `/orders` |
 
 `GET /api/watchlists` returns a top-level array of watchlists. Each watchlist
-contains `id`, `name`, `is_default`, `items_count`, and an `items` array of
-enriched stock objects.
+contains `id`, `name`, `is_default`, `items_count`, and enriched stock `items`.
 
-## WebSocket contract
+### WebSocket events
 
-Local connection:
-
-```text
-ws://localhost:8000/ws?user_id=demo_user&device_id=dev_browser&device_name=Browser&device_type=desktop
-```
-
-Production connection:
-
-```text
-wss://<your-render-service>.onrender.com/ws
-```
-
-Server events:
+The WebSocket gateway delivers:
 
 - `CONNECTED`
 - `TICK`
@@ -367,83 +215,65 @@ Server events:
 - `CROSS_DEVICE_MUTATION`
 - `PONG`
 
-Client messages:
+Clients can send `PING` and synchronized mutation messages for connected
+device fanout.
 
-```json
-{"action":"PING"}
-```
+## Data model
 
-```json
-{
-  "action": "SYNC_MUTATION",
-  "data": {
-    "mutationType": "WATCHLIST_UPDATED",
-    "payload": {}
-  }
-}
-```
+The relational schema covers:
 
-REST loads the initial stock table. WebSocket messages then update matching
-symbols, stream meaningful changes, and deliver notifications. The table does
-not depend on market ticks to show the persisted watchlist.
-
-## Database model
+- Users, devices, and watchlists.
+- Watchlist items and last-seen baselines.
+- Market snapshots and technical signals.
+- Alerts, alert events, and notification jobs.
+- In-app notifications.
+- News records.
+- Simulated orders and portfolio holdings.
 
 The schema is defined in
-[`backend/app/db/schema.sql`](backend/app/db/schema.sql). It includes:
+[`backend/app/db/schema.sql`](backend/app/db/schema.sql).
 
-- `users` and `devices`
-- `watchlists` and `watchlist_items`
-- `alerts` and `alert_events`
-- `market_snapshots` and `technical_signals`
-- `news_items`
-- `notifications` and `notification_jobs`
-- `orders` and `portfolio_holdings`
+## Engineering scope
 
-PostgreSQL is the preferred runtime. SQLite remains available for offline
-development and test execution.
+The current implementation deliberately separates working product behavior
+from production-hardening work:
 
-## Validation commands
+- Authentication currently uses a demo account; multi-user authorization is
+  not implemented.
+- Live provider integrations are optional; simulation and seeded snapshots
+  make the experience demonstrable at any time.
+- Email delivery runs asynchronously from the API process; a dedicated worker
+  is a future production improvement.
+- Some news correlations and timelines use deterministic demo data.
+- Orders are simulated and persisted; no real broker order is placed.
+- Observability, rate-limit governance, secrets management, and a true
+  exchange-grade streaming feed remain future production work.
 
-```bash
-# Backend tests
-./venv/bin/pytest backend/tests/test_backend.py
+## Project structure
 
-# Backend syntax
-./venv/bin/python -m compileall -q backend/app
+```text
+backend/app/
+├── api/          REST router and WebSocket gateway
+├── core/         configuration, event models, market stream
+├── db/           PostgreSQL/SQLite adapter and schema
+└── services/     providers, analysis, alerts, notifications, news, peers
 
-# Frontend production build
-cd frontend
-npm run build
-
-# Frontend lint
-npm run lint
+frontend/src/
+├── components/   terminal UI, tables, charts, alerts, drawers
+├── hooks/        WebSocket and interaction hooks
+├── api/          API and WebSocket configuration
+└── types/        Shared frontend domain types
 ```
 
-## Honest scope and current limitations
-
-This project deliberately distinguishes implemented demo capabilities from
-production-hardening work:
-
-- Authentication is currently represented by a fixed demo user; multi-user
-  authorization is not implemented.
-- The simulator is the reliable default source without provider credentials.
-- Email dispatch currently runs as an asynchronous task in the API process; a
-  separate worker/queue service is a future production step.
-- News timelines and some correlations use deterministic demo data.
-- Orders are simulated and persisted; no real broker order is placed.
-- A true provider-independent exchange stream, observability stack, rate-limit
-  policy, and production secrets management remain future work.
-
-## Project documentation
+## Documentation
 
 - [`docs/project-status.md`](docs/project-status.md) — implementation audit,
-  original plan versus delivered scope, APIs, data model, and roadmap.
+  delivered scope, APIs, data model, and roadmap.
 - [`docs/architecture.md`](docs/architecture.md) — architecture details.
 - [`docs/failure-scenarios.md`](docs/failure-scenarios.md) — failure and
   consistency scenarios.
-- [`docs/implementation_plan.md`](docs/implementation_plan.md) — planned
-  implementation phases.
+- [`docs/implementation_plan.md`](docs/implementation_plan.md) — original
+  implementation plan.
 
 ## License
 
