@@ -19,6 +19,11 @@ charts, heatmaps, and simulated trading.Enriched stock table with **price, daily
 
 > GrowwLens is a market-observation and paper-trading product prototype. It
 > does not place real broker orders or provide investment advice.
+>
+
+## Architecture
+
+![GrowwLens architecture diagram](docs/arch.png)
 
 ## Product capabilities
 
@@ -92,9 +97,6 @@ mode produces realistic price, volume, indicator, index, alert, and
 notification events so the complete product workflow can be demonstrated
 without depending on market hours.
 
-## Architecture
-
-![GrowwLens architecture diagram](docs/arch.png)
 
 ### Runtime architecture
 
