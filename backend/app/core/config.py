@@ -22,6 +22,7 @@ class Settings(BaseModel):
     PROJECT_NAME: str = "GrowwLens"
     VERSION: str = "1.0.0"
     API_PREFIX: str = "/api"
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
     
     # Real Groww API Credentials
     GROWW_API_KEY: str = os.getenv("GROWW_API_KEY", "")

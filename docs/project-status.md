@@ -399,6 +399,50 @@ optional: `GROWW_API_KEY`/`GROWW_API_SECRET` (quotes and holdings),
 8. Add deployment configuration, metrics, tracing, secrets management, and
    operational dashboards.
 
+## 10c. Vercel + Render deployment
+
+### Render backend
+
+Create a Render PostgreSQL database and Redis-compatible Key Value service. Then
+create a Render Web Service connected to this repository with:
+
+- Root directory: repository root
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend`
+
+Set these backend environment variables in Render:
+
+```env
+DATABASE_URL=<Render PostgreSQL internal connection string>
+REDIS_URL=<Render Redis-compatible internal URL>
+REDIS_ENABLED=true
+CORS_ORIGINS=https://<your-vercel-project>.vercel.app
+```
+
+Add optional provider keys only when the corresponding integration is required:
+`GROWW_API_KEY`, `GROWW_API_SECRET`, `INDIAN_STOCK_API_KEY`,
+`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `FINNHUB_API_KEY`, and
+`TWELVEDATA_API_KEY`.
+
+### Vercel frontend
+
+Import the same GitHub repository into Vercel and set the project root
+directory to `frontend`. Vercel detects Vite automatically:
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- Install command: `npm install`
+
+Set these Vercel environment variables:
+
+```env
+VITE_API_URL=https://<your-render-service>.onrender.com
+VITE_WS_URL=wss://<your-render-service>.onrender.com
+```
+
+Deploy Render first, copy its public URL into the Vercel variables, deploy the
+frontend, then replace `CORS_ORIGINS` in Render with the final Vercel URL.
+
 ## 11. Final assessment
 
 The project has delivered the core differentiated demo promised in the plan:

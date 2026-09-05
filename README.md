@@ -243,6 +243,14 @@ npm run dev
 
 Frontend: <http://localhost:5173>
 
+For separate Vercel and Render deployments, set these Vercel environment
+variables to the deployed Render URLs:
+
+```env
+VITE_API_URL=https://your-render-service.onrender.com
+VITE_WS_URL=wss://your-render-service.onrender.com
+```
+
 For a single-port deployment, build the frontend and start the backend:
 
 ```bash
