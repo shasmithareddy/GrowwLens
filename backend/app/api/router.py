@@ -888,8 +888,12 @@ class SimulationModeRequest(BaseModel):
     enabled: bool
 
 @router.post("/settings/simulation-mode")
-def set_simulation_mode(req: SimulationModeRequest):
+async def set_simulation_mode(req: SimulationModeRequest):
     new_state = market_adapter.toggle_simulation_mode(req.enabled)
+    if not new_state:
+        # Do not make the UI wait for slow external provider calls. The market
+        # loop will continue serving the restored official snapshot meanwhile.
+        asyncio.create_task(asyncio.to_thread(market_adapter.sync_real_groww_data_now))
     sync_error = market_adapter.last_sync_error
     market_open = is_indian_market_open()
     if not new_state and not market_open:

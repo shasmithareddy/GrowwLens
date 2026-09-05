@@ -228,15 +228,58 @@ export function App() {
       symbol: alertData.symbol
     });
 
-    // Refresh notifications list and alerts status
-    fetchNotifications();
+    const liveNotification: NotificationItem = {
+      id: `live_${alertData.event_id}`,
+      user_id: 'user_harish',
+      event_id: alertData.event_id,
+      symbol: alertData.symbol,
+      title: `🎯 Alert Triggered: ${alertData.symbol}`,
+      body: alertData.message,
+      channel: 'IN_APP',
+      status: 'DELIVERED',
+      read: false,
+      created_at: alertData.timestamp,
+    };
+    setNotifications((previous) => [
+      liveNotification,
+      ...previous.filter((notification) => notification.event_id !== liveNotification.event_id),
+    ].slice(0, 30));
     fetchAlerts();
 
     // Auto dismiss toast after 6s
     setTimeout(() => {
       setActiveToast(null);
     }, 6000);
-  }, [fetchNotifications, fetchAlerts]);
+  }, [fetchAlerts]);
+
+  const handleMeaningfulChange = useCallback((changeData: any) => {
+    setWhatChangedReport((previous) => {
+      const items = [
+        {
+          symbol: changeData.symbol,
+          company_name: changeData.company_name ?? changeData.symbol,
+          current_price: changeData.current_price,
+          currency: '₹',
+          last_seen_price: changeData.last_seen_price,
+          last_seen_time: changeData.last_seen_time,
+          time_elapsed_min: 0,
+          changes: changeData.changes.map((change: any) => ({
+            type: change.change_type,
+            title: change.title,
+            detail: change.description,
+            badge: change.delta_value ?? 'LIVE',
+            color: change.badge_color,
+          })),
+        },
+        ...(previous?.items ?? []).filter((item) => item.symbol !== changeData.symbol),
+      ].slice(0, 30);
+      return {
+        last_checked_summary: 'Live market changes detected just now',
+        total_meaningful_changes: items.length,
+        items,
+      };
+    });
+  }, []);
 
   // Handle cross-device mutation received from another tab/device
   const handleCrossDeviceMutation = useCallback(() => {
@@ -251,6 +294,7 @@ export function App() {
     onAlertTriggered: handleAlertTriggered,
     onCrossDeviceMutation: handleCrossDeviceMutation,
     onPriceTick: handlePriceTick,
+    onMeaningfulChange: handleMeaningfulChange,
   });
 
   // Watchlist Actions

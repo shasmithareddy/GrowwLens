@@ -285,8 +285,6 @@ class MarketProviderAdapter:
             self._pre_simulation_stocks = None
             self._pre_simulation_indices = None
         self.simulation_mode = enabled
-        if not enabled:
-            self.sync_real_groww_data_now()
         print(f"Simulation mode toggled to: {self.simulation_mode}")
         return self.simulation_mode
 

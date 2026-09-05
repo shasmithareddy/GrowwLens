@@ -54,6 +54,24 @@ async def broadcast_market_event_to_ws(event: MarketEvent):
     for ws in disconnected:
         connected_clients.discard(ws)
 
+    if changes:
+        change_payload = {
+            "action": "WHAT_CHANGED",
+            "data": {
+                "symbol": event.symbol,
+                "company_name": market_adapter.stocks_data.get(event.symbol, {}).get("name", event.symbol),
+                "current_price": event.price,
+                "last_seen_price": event.prev_close,
+                "last_seen_time": event.timestamp,
+                "changes": [change.model_dump() for change in changes],
+            },
+        }
+        for ws in list(connected_clients):
+            try:
+                await ws.send_json(change_payload)
+            except Exception:
+                connected_clients.discard(ws)
+
 # Register notification listener
 async def on_alert_triggered(alert_event: AlertEvent):
     await notification_service.broadcast_alert_to_devices(alert_event)

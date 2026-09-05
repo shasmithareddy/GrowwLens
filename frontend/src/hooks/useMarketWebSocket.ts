@@ -7,13 +7,15 @@ interface UseMarketWebSocketProps {
   onAlertTriggered: (alertData: any) => void;
   onCrossDeviceMutation: () => void;
   onPriceTick: (symbol: string, tickData: any) => void;
+  onMeaningfulChange: (changeData: any) => void;
 }
 
 export const useMarketWebSocket = ({
   activeDevice,
   onAlertTriggered,
   onCrossDeviceMutation,
-  onPriceTick
+  onPriceTick,
+  onMeaningfulChange
 }: UseMarketWebSocketProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [dataQuality, setDataQuality] = useState({
@@ -55,6 +57,8 @@ export const useMarketWebSocket = ({
 
           if (action === 'TICK') {
             onPriceTick(data.symbol, data);
+          } else if (action === 'WHAT_CHANGED') {
+            onMeaningfulChange(data);
           } else if (action === 'ALERT_TRIGGERED') {
             onAlertTriggered(data);
           } else if (action === 'CROSS_DEVICE_MUTATION') {
