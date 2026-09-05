@@ -1,6 +1,6 @@
 # GrowwLens
 
-## Intelligent market intelligence for traders
+## Intelligent market watchlist for Investors and Traders
 
 GrowwLens is a trader-focused market intelligence terminal that turns a
 watchlist into an explanation layer for the market.
